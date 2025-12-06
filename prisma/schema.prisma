@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model City {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  summary   String?
+  images    String[] @default([])
+  routes    Route[]
+  events    LiveEvent[]
+}
+
+model Route {
+  id        Int       @id
+  title     String
+  city      City      @relation(fields: [cityId], references: [id])
+  cityId    Int
+  author    User?     @relation(fields: [authorId], references: [id])
+  authorId  Int?
+  days      Int
+  desc      String
+  theme     String?
+  tags      String[]
+  itinerary Json
+  images    String[]  @default([])
+  likes     RouteLike[]
+  savedBy   SavedRoute[]
+}
+
+model User {
+  id        Int         @id @default(autoincrement())
+  email     String      @unique
+  password  String
+  name      String?
+  avatarUrl String?
+  role      UserRole    @default(USER)
+  routes    Route[]
+  likes     RouteLike[]
+  saved     SavedRoute[]
+  refreshTokens RefreshToken[]
+  createdAt DateTime    @default(now())
+}
+
+model RouteLike {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  route     Route    @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  routeId   Int
+  createdAt DateTime @default(now())
+
+  @@unique([userId, routeId])
+}
+
+model SavedRoute {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  route     Route    @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  routeId   Int
+  createdAt DateTime @default(now())
+
+  @@unique([userId, routeId])
+}
+
+model TagHint {
+  id   Int    @id @default(autoincrement())
+  tag  String @unique
+  hint String
+}
+
+model LiveEvent {
+  id          Int      @id @default(autoincrement())
+  city        City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  cityId      Int
+  title       String
+  description String
+  category    String
+  date        DateTime
+  tags        String[] @default([])
+  link        String?
+  lat         Float?
+  lng         Float?
+  createdAt   DateTime @default(now())
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revoked   Boolean  @default(false)
+}
